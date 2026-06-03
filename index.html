@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>জলদস্যু — বাংলা কার্ড গেম</title>
+    <meta name="description" content="জলদস্যু — একটি বাংলা পাইরেট কার্ড গেম। লোকাল মাল্টিপ্লেয়ার, AI বট এবং অনলাইন মোডে খেলুন।" />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:title" content="জলদস্যু — বাংলা কার্ড গেম" />
+    <meta property="og:description" content="জলদস্যু — একটি বাংলা পাইরেট কার্ড গেম।" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="জলদস্যু — বাংলা কার্ড গেম" />
+    <meta name="twitter:description" content="জলদস্যু — একটি বাংলা পাইরেট কার্ড গেম।" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- GitHub Pages SPA reload fix: convert /route reloads into index.html loads -->
+    <script>
+      (function (l) {
+        if (l.search && l.search[1] === "/") {
+          var decoded = l.search
+            .slice(1)
+            .split("&")
+            .map(function (s) {
+              return s.replace(/~and~/g, "&");
+            })
+            .join("?");
+          window.history.replaceState(null, null, l.pathname.slice(0, -1) + decoded + l.hash);
+        }
+      })(window.location);
+    </script>
+    <!-- cache-bust so GitHub Pages + browser won't keep old JS/CSS after you replace files -->
+    <!--
+      Hotfix:
+      - "তলোয়ারবাজ" কার্ডে ল্যাগ কমানো (audio noise buffer cache)
+      - লোকাল মাল্টিপ্লেয়ার (একাধিক মানুষ) হলে তলোয়ারবাজের ফলে কার্ডের নাম প্রকাশ না করা
+    -->
+    <!-- Serverless LAN multiplayer shim (WebRTC + manual copy/paste). -->
+    <script src="./p2p_lan.js?v=1"></script>
+    <script type="module">
+      const entryUrl = new URL("./assets/index-Er7WoFSS.js?v=8", import.meta.url);
+      const res = await fetch(entryUrl);
+      let code = await res.text();
+
+      // 1) Reduce lag: cache white-noise buffer used by SFX
+      const oldCt =
+        'function ct(e,n,i,r,l=2e3,c=0){const f=e.sampleRate*.5,h=e.createBuffer(1,f,e.sampleRate),m=h.getChannelData(0);for(let g=0;g<f;g++)m[g]=(Math.random()*2-1)*n;const p=e.createBufferSource();p.buffer=h;const y=e.createBiquadFilter();if(y.type="lowpass",y.frequency.value=l,c>0){const g=e.createBiquadFilter();g.type="highpass",g.frequency.value=c,p.connect(g),g.connect(y)}else p.connect(y);y.connect(r),p.start(i)}';
+      const newCt =
+        'let __noiseBuf=null,__noiseSampleRate=0;function ct(e,n,i,r,l=2e3,c=0){const f=e.sampleRate*.5;let h=__noiseBuf;if(!h||__noiseSampleRate!==e.sampleRate){h=e.createBuffer(1,f,e.sampleRate);const p=h.getChannelData(0);for(let y=0;y<f;y++)p[y]=Math.random()*2-1;__noiseBuf=h,__noiseSampleRate=e.sampleRate}const m=e.createBufferSource();m.buffer=h;const g=e.createGain();g.gain.value=n;const p=e.createBiquadFilter();if(p.type="lowpass",p.frequency.value=l,c>0){const y=e.createBiquadFilter();y.type="highpass",y.frequency.value=c,m.connect(g),g.connect(y),y.connect(p)}else m.connect(g),g.connect(p);p.connect(r),m.start(i)}';
+      if (code.includes(oldCt)) code = code.replace(oldCt, newCt);
+
+      // 2) Remove swordsman log when no target (keep resultMessage)
+      const oldNoTarget =
+        'h.length===0&&["guard","ship_worker","swordsman","sailor"].includes(r)?(f=zt({...f,resultMessage:`কোনো বৈধ লক্ষ্য নেই — ${Te[r]} এর কোনো প্রভাব নেই।`},`${i.name} ${Te[r]} খেলেছেন — কোনো লক্ষ্য নেই।`),{...f,playStep:"show_result"})';
+      const newNoTarget =
+        'h.length===0&&["guard","ship_worker","swordsman","sailor"].includes(r)?(r==="swordsman"?{...f,resultMessage:`কোনো বৈধ লক্ষ্য নেই — ${Te[r]} এর কোনো প্রভাব নেই।`,playStep:"show_result"}:(f=zt({...f,resultMessage:`কোনো বৈধ লক্ষ্য নেই — ${Te[r]} এর কোনো প্রভাব নেই।`},`${i.name} ${Te[r]} খেলেছেন — কোনো লক্ষ্য নেই।`),{...f,playStep:"show_result"}))';
+      if (code.includes(oldNoTarget)) code = code.replace(oldNoTarget, newNoTarget);
+
+      // 3) Swordsman compare: do NOT reveal any card (and no log entry)
+      const oldZj =
+        'function Zj(e,n){const i=e.players[e.currentPlayerIndex],r=e.players[n],l=i.hand[0],c=r.hand[0],f=l?Rt[l]:-1,h=c?Rt[c]:-1;let m=e.players,p="";return f>h?(m=ur(m,n),p=`${i.name} (${l?Te[l]:"?"}) বনাম ${r.name} (${c?Te[c]:"?"}) — ${r.name} হেরেছেন!`):h>f?(m=ur(m,e.currentPlayerIndex),p=`${i.name} (${l?Te[l]:"?"}) বনাম ${r.name} (${c?Te[c]:"?"}) — ${i.name} হেরেছেন!`):p=`${i.name} বনাম ${r.name} — টাই! কেউ বাদ পড়েননি।`,{...zt({...e,players:m,resultMessage:p},p),playStep:"show_result"}}';
+      const newZj =
+        'function Zj(e,n){const i=e.players[e.currentPlayerIndex],r=e.players[n],l=i.hand[0],c=r.hand[0],f=l?Rt[l]:-1,h=c?Rt[c]:-1;let m=e.players,p="";return f>h?(m=ur(m,n),p=`${i.name} বনাম ${r.name} — ${r.name} হেরেছেন!`):h>f?(m=ur(m,e.currentPlayerIndex),p=`${i.name} বনাম ${r.name} — ${i.name} হেরেছেন!`):p=`${i.name} বনাম ${r.name} — টাই! কেউ বাদ পড়েননি।`,{...e,players:m,resultMessage:p,playStep:"show_result"}}';
+      if (code.includes(oldZj)) code = code.replace(oldZj, newZj);
+
+      // 4) Replace Socket.IO client with serverless LAN P2P shim
+      // (online mode will use WebRTC datachannel instead of /api/socket.io)
+      const oldSock1 = '_a(ok(),{path:\"/api/socket.io\",transports:[\"websocket\",\"polling\"]})';
+      const oldSock2 = '_a(fk(),{path:\"/api/socket.io\",transports:[\"websocket\",\"polling\"]})';
+      const newSock = 'window.__LAN_P2P_IO__()';
+      if (code.includes(oldSock1)) code = code.replaceAll(oldSock1, newSock);
+      if (code.includes(oldSock2)) code = code.replaceAll(oldSock2, newSock);
+
+      const blobUrl = URL.createObjectURL(new Blob([code], { type: "text/javascript" }));
+      try {
+        await import(blobUrl);
+      } finally {
+        URL.revokeObjectURL(blobUrl);
+      }
+    </script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CVHLiWwd.css?v=8">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // Offline support (PWA). First load needs internet; after that it can run without data.
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(function () {});
+        });
+      }
+    </script>
+  </body>
+</html>
